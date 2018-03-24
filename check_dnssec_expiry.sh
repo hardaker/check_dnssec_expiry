@@ -26,12 +26,15 @@ usage $0 -z <zone> [-w <warning %>] [-c <critical %>] [-r <resolver>] [-f <alway
 	-f <always failing domain>
 		specify a domain that will always fail DNSSEC.
 		used to test if DNSSEC is supported in used tools.
+        -n
+                Don't check failure zones and just check the date range
+                (only trust use this unless you're on an auth server)
 _EOT_
 	exit 255
 }
 
 # Parse the input options
-while getopts ":z:w:c:r:f:h" opt; do
+while getopts ":z:w:c:r:f:nh" opt; do
   case $opt in
     z)
       zone=$OPTARG
@@ -47,6 +50,9 @@ while getopts ":z:w:c:r:f:h" opt; do
       ;;
     f)
       alwaysFailingDomain=$OPTARG
+      ;;
+    n)
+      dontCheckFailures=1
       ;;
     h)
       usage ;;
@@ -86,13 +92,13 @@ if [[ -z $alwaysFailingDomain ]]; then
 	alwaysFailingDomain="dnssec-failed.org"
 fi
 
-
-
-# Check the resolver to properly validate DNSSEC at all (if he doesn't, every further test is futile and a waste of bandwith)
-checkResolverDoesDnssecValidation=$(dig +nocmd +nostats +noquestion $alwaysFailingDomain @${resolver} | grep "opcode: QUERY" | grep "status: SERVFAIL")
-if [[ -z $checkResolverDoesDnssecValidation ]]; then
-	echo "WARNING: Resolver seems to not validate DNSSEC signatures - going further seems hopeless right now."
-	exit 1
+if [[ -z $dontCheckFailures ]] ; then
+	# Check the resolver to properly validate DNSSEC at all (if he doesn't, every further test is futile and a waste of bandwith)
+	checkResolverDoesDnssecValidation=$(dig +nocmd +nostats +noquestion $alwaysFailingDomain @${resolver} | grep "opcode: QUERY" | grep "status: SERVFAIL")
+	if [[ -z $checkResolverDoesDnssecValidation ]]; then
+		echo "WARNING: Resolver seems to not validate DNSSEC signatures - going further seems hopeless right now."
+		exit 1
+	fi
 fi
 
 # Check if the resolver delivers an answer for the domain to test

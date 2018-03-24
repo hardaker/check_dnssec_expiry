@@ -105,7 +105,7 @@ You can set vars.resolver to the address of a resolver to use, etc.
 | -c | Sets the critical percentage value regarding the remainig lifetime of the signature | no | 10 |
 | -r | Sets the resolver to use | no | 8.8.8.8 |
 | -f | Sets the always failing domain (used to verify the proper function of the resolving server | no | dnssec-failed.org |
-
+| -n | Don't check for validation failure -- assume we're on an authoritative server |
 
 ## TODO:
 
